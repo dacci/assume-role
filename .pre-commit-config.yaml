@@ -1,0 +1,12 @@
+repos:
+  - repo: https://github.com/doublify/pre-commit-rust
+    rev: v1.0
+    hooks:
+      - id: fmt
+      - id: clippy
+        args: ['--all-features', '--', '-D', 'warnings']
+  - repo: https://github.com/dacci/pre-commit
+    rev: v0.1.0
+    hooks:
+      - id: cargo-test
+        args: ['--all-features']
