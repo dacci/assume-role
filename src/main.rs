@@ -8,9 +8,9 @@ use tokio::process::Command;
 
 #[derive(clap::Parser)]
 struct Args {
-    /// The Amazon Resource Name (ARN) of the role to assume.
-    #[arg(short, long, value_name = "ARN")]
-    role_arn: String,
+    /// The name or the Amazon Resource Name (ARN) of the role to assume.
+    #[arg(short, long, value_name = "NAME")]
+    role: String,
 
     /// An identifier for the assumed role session.
     #[arg(long, value_name = "NAME")]
@@ -77,9 +77,21 @@ async fn async_main(args: Args) -> Result<()> {
     let config = aws_config::load_from_env().await;
     let sts = aws_sdk_sts::Client::new(&config);
 
+    let role_arn = if args.role.starts_with("arn:") {
+        args.role
+    } else {
+        let iam = aws_sdk_iam::Client::new(&config);
+        let response = iam.get_role().role_name(args.role).send().await?;
+        response
+            .role()
+            .ok_or_else(|| anyhow!("role is not provided"))
+            .and_then(|r| r.arn().ok_or_else(|| anyhow!("arn is not provided")))?
+            .to_string()
+    };
+
     let mut request = sts
         .assume_role()
-        .role_arn(args.role_arn)
+        .role_arn(role_arn)
         .role_session_name(
             args.role_session_name
                 .unwrap_or_else(|| format!("assume-role@{}", Utc::now().timestamp())),
