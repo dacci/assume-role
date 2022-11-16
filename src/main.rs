@@ -3,7 +3,6 @@ use aws_sdk_sts::model::{PolicyDescriptorType, Tag};
 use chrono::Utc;
 use clap::Parser;
 use tokio::fs::File;
-use tokio::io::AsyncReadExt;
 use tokio::process::Command;
 
 #[derive(clap::Parser)]
@@ -20,7 +19,7 @@ struct Args {
     #[arg(long, value_name = "ARN")]
     policy_arn: Vec<String>,
 
-    /// An IAM policy in JSON format that you want to use as an inline session policy.
+    /// An IAM policy in JSON or YAML that you want to use as an inline session policy.
     #[arg(short, long, value_name = "PATH")]
     policy: Option<String>,
 
@@ -118,15 +117,15 @@ async fn async_main(args: Args) -> Result<()> {
     }
 
     if let Some(path) = &args.policy {
-        let mut f = File::open(path)
+        let f = File::open(path)
             .await
-            .with_context(|| format!("failed to open `{path}`"))?;
+            .with_context(|| format!("failed to open `{path}`"))?
+            .into_std()
+            .await;
+        let value: serde_yaml::Value =
+            serde_yaml::from_reader(f).with_context(|| format!("failed to read `{path}`"))?;
 
-        let mut policy = String::new();
-        f.read_to_string(&mut policy)
-            .await
-            .with_context(|| format!("failed to read `{path}`"))?;
-
+        let policy = serde_json::to_string(&value).context("malformed policy")?;
         request = request.policy(policy);
     }
 
