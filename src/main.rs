@@ -143,6 +143,13 @@ async fn async_main(args: Args) -> Result<()> {
         return Err(anyhow!("no secret_access_key provided"));
     };
 
+    if let Some(expiration) = credentials.expiration() {
+        println!(
+            "Credentials will expire at {}",
+            expiration.fmt(aws_smithy_types::date_time::Format::DateTime)?
+        );
+    }
+
     let mut cmd = if args.command.is_empty() {
         Command::new(std::env::var("SHELL").context("failed to get environment variable `SHELL`")?)
     } else {

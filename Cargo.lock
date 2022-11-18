@@ -52,6 +52,7 @@ dependencies = [
  "aws-config",
  "aws-sdk-iam",
  "aws-sdk-sts",
+ "aws-smithy-types",
  "chrono",
  "clap",
  "serde_json",

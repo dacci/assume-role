@@ -10,6 +10,7 @@ anyhow = { version = "1.0.66", features = ["backtrace"] }
 aws-config = "0.51.0"
 aws-sdk-iam = "0.21.0"
 aws-sdk-sts = "0.21.0"
+aws-smithy-types = "0.51.0"
 chrono = "0.4.23"
 clap = { version = "4.0.24", features = ["derive"] }
 serde_json = "1.0.87"
