@@ -1,5 +1,5 @@
 use anyhow::{anyhow, Context as _, Result};
-use aws_sdk_sts::model::{PolicyDescriptorType, Tag};
+use aws_sdk_sts::types::{PolicyDescriptorType, Tag};
 use chrono::Utc;
 use clap::Parser;
 use tokio::fs::File;
