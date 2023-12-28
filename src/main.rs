@@ -73,7 +73,7 @@ fn main() -> Result<()> {
 }
 
 async fn async_main(args: Args) -> Result<()> {
-    let config = aws_config::load_from_env().await;
+    let config = aws_config::load_defaults(aws_config::BehaviorVersion::latest()).await;
     let sts = aws_sdk_sts::Client::new(&config);
 
     let role_arn = if args.role.starts_with("arn:") {
@@ -84,7 +84,7 @@ async fn async_main(args: Args) -> Result<()> {
         response
             .role()
             .ok_or_else(|| anyhow!("role is not provided"))
-            .and_then(|r| r.arn().ok_or_else(|| anyhow!("arn is not provided")))?
+            .map(|r| r.arn())?
             .to_string()
     };
 
@@ -110,7 +110,7 @@ async fn async_main(args: Args) -> Result<()> {
 
     for tag in &args.tag {
         if let Some((key, value)) = tag.split_once('=') {
-            request = request.tags(Tag::builder().key(key).value(value).build());
+            request = request.tags(Tag::builder().key(key).value(value).build()?);
         } else {
             return Err(anyhow!("illegal tag: `{tag}`"));
         }
@@ -135,20 +135,12 @@ async fn async_main(args: Args) -> Result<()> {
         return Err(anyhow!("no credentials provided"));
     };
 
-    let Some(access_key_id) = credentials.access_key_id()  else {
-        return Err(anyhow!("no access_key_id provided"));
-    };
-
-    let Some(secret_access_key) = credentials.secret_access_key() else {
-        return Err(anyhow!("no secret_access_key provided"));
-    };
-
-    if let Some(expiration) = credentials.expiration() {
-        println!(
-            "Credentials will expire at {}",
-            expiration.fmt(aws_smithy_types::date_time::Format::DateTime)?
-        );
-    }
+    println!(
+        "Credentials will expire at {}",
+        credentials
+            .expiration
+            .fmt(aws_smithy_types::date_time::Format::DateTime)?
+    );
 
     let mut cmd = if args.command.is_empty() {
         Command::new(std::env::var("SHELL").context("failed to get environment variable `SHELL`")?)
@@ -159,11 +151,9 @@ async fn async_main(args: Args) -> Result<()> {
         cmd
     };
 
-    cmd.env("AWS_ACCESS_KEY_ID", access_key_id)
-        .env("AWS_SECRET_ACCESS_KEY", secret_access_key);
-    if let Some(session_token) = credentials.session_token() {
-        cmd.env("AWS_SESSION_TOKEN", session_token);
-    }
+    cmd.env("AWS_ACCESS_KEY_ID", credentials.access_key_id())
+        .env("AWS_SECRET_ACCESS_KEY", credentials.secret_access_key())
+        .env("AWS_SESSION_TOKEN", credentials.session_token());
 
     cmd.spawn()?.wait().await?;
 

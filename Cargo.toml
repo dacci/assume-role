@@ -7,10 +7,10 @@ edition = "2021"
 
 [dependencies]
 anyhow = { version = "1.0.75", features = ["backtrace"] }
-aws-config = "0.56.1"
-aws-sdk-iam = "0.30.0"
-aws-sdk-sts = "0.30.0"
-aws-smithy-types = "0.56.1"
+aws-config = "1.1.1"
+aws-sdk-iam = "1.9.1"
+aws-sdk-sts = "1.9.0"
+aws-smithy-types = "1.1.1"
 chrono = { version = "0.4.30", default-features = false, features = ["std", "clock"] }
 clap = { version = "4.4.2", features = ["derive"] }
 serde_json = "1.0.106"
